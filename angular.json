@@ -33,11 +33,11 @@
             "prefix": "app",
             "architect": {
                 "build": {
-                    "builder": "@angular-devkit/build-angular:browser",
+                    "builder": "@angular-devkit/build-angular:application",
                     "options": {
                         "outputPath": "dist/compodoc-demo-todomvc-angular",
                         "index": "src/index.html",
-                        "main": "src/main.ts",
+                        "browser": "src/main.ts",
                         "polyfills": ["zone.js"],
                         "tsConfig": "tsconfig.app.json",
                         "aot": true,
@@ -56,12 +56,9 @@
                             "optimization": true,
                             "outputHashing": "all",
                             "sourceMap": false,
-                            "extractCss": true,
                             "namedChunks": false,
                             "aot": true,
                             "extractLicenses": true,
-                            "vendorChunk": false,
-                            "buildOptimizer": true,
                             "budgets": [
                                 {
                                     "type": "initial",
@@ -75,22 +72,21 @@
                 "serve": {
                     "builder": "@angular-devkit/build-angular:dev-server",
                     "options": {
-                        "browserTarget": "compodoc-demo-todomvc-angular:build"
+                        "buildTarget": "compodoc-demo-todomvc-angular:build"
                     },
                     "configurations": {
                         "production": {
-                            "browserTarget": "compodoc-demo-todomvc-angular:build:production"
+                            "buildTarget": "compodoc-demo-todomvc-angular:build:production"
                         }
                     }
                 },
                 "extract-i18n": {
                     "builder": "@angular-devkit/build-angular:extract-i18n",
                     "options": {
-                        "browserTarget": "compodoc-demo-todomvc-angular:build"
+                        "buildTarget": "compodoc-demo-todomvc-angular:build"
                     }
                 }
             }
         }
-    },
-    "defaultProject": "compodoc-demo-todomvc-angular"
+    }
 }
