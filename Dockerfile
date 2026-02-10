@@ -1,23 +1,25 @@
-# Build stage
+# ---------- Build Stage ----------
 FROM node:18-alpine AS build
 
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY . .
 RUN npm run build --prod
 
-# Run stage
+
+# ---------- Runtime Stage ----------
 FROM nginx:alpine
 
-# Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy Angular build
-COPY --from=build /app/dist/your-app-name /usr/share/nginx/html
+# 🔴 REPLACE app-name with the one from angular.json
+COPY --from=build /app/dist/compodoc-demo-todomvc-angular /usr/share/nginx/html
 
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
