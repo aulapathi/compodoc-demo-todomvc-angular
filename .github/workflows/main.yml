@@ -1,62 +1,64 @@
-# This is a basic workflow to help you get started with Actions
+name: Deploy Angular App to Amazon Linux EC2
 
-name: CI
-
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# Trigger deployment on push to main
 on:
-    push:
-        branches: [master]
-    pull_request:
-        branches: [master]
+  push:
+    branches:
+      - master
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-    # This workflow contains a single job called "build"
-    build:
-        # The type of runner that the job will run on
-        runs-on: ubuntu-latest
+  deploy:
+    runs-on: ubuntu-latest
 
-        # Steps represent a sequence of tasks that will be executed as part of the job
-        steps:
-            # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-            - uses: actions/checkout@v5
+    steps:
+      # 1️⃣ Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-            - name: Cache node modules
-              uses: actions/cache@v4
-              with:
-                  path: node_modules
-                  key: ${{ runner.OS }}-build-${{ hashFiles('**/package-lock.json') }}
-                  restore-keys: |
-                      ${{ runner.OS }}-build-${{ env.cache-name }}-
-                      ${{ runner.OS }}-build-
-                      ${{ runner.OS }}-
+      # 2️⃣ Install Node and NPM (Optional if Docker build does it)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-            - name: Install Dependencies
-              run: npm ci
-            - name: Build doc
-              run: npm run doc
-            - name: Archive www Artifact
-              uses: actions/upload-artifact@master
-              with:
-                  name: documentation
-                  path: documentation
-    deploy:
-        name: Deploy 🚀
-        needs: [build]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout Repo
-              uses: actions/checkout@master
-            - name: Download Artifact
-              uses: actions/download-artifact@master
-              with:
-                  name: documentation
-                  path: documentation
-            - name: Deploy to github pages
-              uses: JamesIves/github-pages-deploy-action@3.6.2
-              with:
-                  GITHUB_TOKEN: ${{ secrets.COMPODOC_GITHUB_PAGES_TOKEN }}
-                  BRANCH: gh-pages # The branch the action should deploy to.
-                  FOLDER: documentation # The folder the action should deploy.
-                  CLEAN: true # Automatically remove deleted files from the deploy branch
+      # 3️⃣ Build Docker image
+      - name: Build Docker image
+        run: docker build -t angular-app .
+
+      # 4️⃣ Save Docker image to tar.gz
+      - name: Save Docker image
+        run: docker save angular-app | gzip > angular-app.tar.gz
+
+      # 5️⃣ Copy Docker image to EC2
+      - name: Copy image to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: angular-app.tar.gz
+          target: /home/ec2-user
+
+      # 6️⃣ Load Docker image and run container on EC2
+      - name: Deploy container on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Stop existing container if running
+            docker stop angular-app || true
+            docker rm angular-app || true
+
+            # Load Docker image
+            docker load < /home/ec2-user/angular-app.tar.gz
+
+            # Run container
+            docker run -d \
+              --name angular-app \
+              -p 80:80 \
+              angular-app
+
+            # Optional: clean old images to save space
+            docker image prune -f
