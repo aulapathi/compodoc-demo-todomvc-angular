@@ -1,20 +1,13 @@
-import { PipeTransform, Pipe } from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 
-/**
- * Uppercase the first letter of the string
- *
- * __Usage :__
- *   value | firstUpper:exponent
- *
- * __Example :__
- *   {{ car |  firstUpper}}
- *   formats to: Car
- */
 @Pipe({
-    name: 'firstUpper'
+  name: 'firstUpper',
+  standalone: true
 })
 export class FirstUpperPipe implements PipeTransform {
-    transform(value, args) {
-        return value.charAt(0).toUpperCase() + value.slice(1);
-    }
+  transform(value: string): string {
+    return value
+      ? value.charAt(0).toUpperCase() + value.slice(1)
+      : value;
+  }
 }
