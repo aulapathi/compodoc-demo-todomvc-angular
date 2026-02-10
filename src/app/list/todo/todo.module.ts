@@ -12,6 +12,6 @@ const PIPES_AND_DIRECTIVES = [FirstUpperPipe];
  */
 @NgModule({
     imports: [BrowserModule],
-    declarations: [PIPES_AND_DIRECTIVES],
+    declarations: [...PIPES_AND_DIRECTIVES],
 })
 export class TodoModule {}
