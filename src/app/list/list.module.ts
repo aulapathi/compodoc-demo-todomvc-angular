@@ -24,7 +24,7 @@ const MODULES = [TodoModule, BrowserModule];
  */
 @NgModule({
     imports: [MODULES, TodoComponent],
-    declarations: [ListComponent],
+    declarations: [...ListComponent],
     exports: [ListComponent],
 })
 export class ListModule {}
